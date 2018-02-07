@@ -32,13 +32,14 @@ controller.hears(/^\d+$/, ['message_received'], (bot, message) => {
     ])
 
     const loop = message.text
+    let jump
     for (let i = 1; i < loop; i++) {
       convo.addMessage(`Thread ${i}`, `${i}`)
       convo.addQuestion(`Do you wanna go to thread ${i + 1}?`, [
         {
           pattern: bot.utterances.yes,
           callback: (res, convo) => {
-            convo.gotoThread(`${i + 1}`)
+            convo.gotoThread(jump || `${i + 1}`)
           }
         },
         {
@@ -65,6 +66,7 @@ controller.hears(/^\d+$/, ['message_received'], (bot, message) => {
           arr.push({
             pattern: `${i}`,
             callback: (res, convo) => {
+              jump = `${loop}`
               convo.gotoThread(`${i}`)
             }
           })
