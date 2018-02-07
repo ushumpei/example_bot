@@ -2,7 +2,7 @@
   "name": "example_bot",
   "version": "0.0.1",
   "scripts": {
-    "start": "babel-node ./index.js --presets env"
+    "start": "nodemon index.js --exec babel-node --presets env"
   },
   "description": "This is a code example to understand how to use Botkit.",
   "main": "index.js",
@@ -16,7 +16,8 @@
     "eslint-plugin-import": "^2.8.0",
     "eslint-plugin-node": "^6.0.0",
     "eslint-plugin-promise": "^3.6.0",
-    "eslint-plugin-standard": "^3.0.1"
+    "eslint-plugin-standard": "^3.0.1",
+    "nodemon": "^1.14.12"
   },
   "dependencies": {
     "botkit": "^0.6.9"
