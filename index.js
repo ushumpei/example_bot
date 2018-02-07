@@ -3,7 +3,8 @@ import Botkit from 'botkit'
 const controller = Botkit.consolebot({ debug: false })
 controller.setTickDelay(100)
 
-controller.on('message_received', (bot, message) => {
+controller.hears(/^\d+$/, ['message_received'], (bot, message) => {
+  if (message.text <= 0) return bot.reply(message, 'Please enter a non zero positive number')
   bot.reply(message, 'Hello world!')
   bot.createConversation(message, (err, convo) => {
     if (err) throw err
@@ -30,7 +31,7 @@ controller.on('message_received', (bot, message) => {
       }
     ])
 
-    const loop = 10
+    const loop = message.text
     for (let i = 1; i < loop; i++) {
       convo.addMessage(`Thread ${i}`, `${i}`)
       convo.addQuestion(`Do you wanna go to thread ${i + 1}?`, [
@@ -81,6 +82,10 @@ controller.on('message_received', (bot, message) => {
     convo.addMessage('Conversation end', 'complete')
     convo.activate()
   })
+})
+
+controller.hears(/[^\d]*/, ['message_received'], (bot, message) => {
+  bot.reply(message, 'Please enter a non zero positive number')
 })
 
 controller.spawn()
