@@ -1,8 +1,15 @@
 {
   "name": "example_bot",
   "version": "0.0.1",
+  "scripts": {
+    "start": "babel-node ./index.js --presets env"
+  },
   "description": "This is a code example to understand how to use Botkit.",
   "main": "index.js",
   "author": "ushumpei",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.6.1"
+  }
 }
