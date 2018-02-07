@@ -8,7 +8,6 @@ controller.on('message_received', (bot, message) => {
   bot.createConversation(message, (err, convo) => {
     if (err) throw err
     convo.say('Conversation start')
-
     convo.ask('Do you wanna go to thread 1?', [
       {
         pattern: bot.utterances.yes,
@@ -31,67 +30,53 @@ controller.on('message_received', (bot, message) => {
       }
     ])
 
-    convo.addMessage('Thread 1', '1')
-    convo.addQuestion('Do you wanna go to thread 2?', [
-      {
-        pattern: bot.utterances.yes,
-        callback: (res, convo) => {
-          convo.gotoThread('2')
+    const loop = 10
+    for (let i = 1; i < loop; i++) {
+      convo.addMessage(`Thread ${i}`, `${i}`)
+      convo.addQuestion(`Do you wanna go to thread ${i + 1}?`, [
+        {
+          pattern: bot.utterances.yes,
+          callback: (res, convo) => {
+            convo.gotoThread(`${i + 1}`)
+          }
+        },
+        {
+          pattern: bot.utterances.no,
+          callback: (res, convo) => {
+            convo.gotoThread('complete')
+          }
+        },
+        {
+          default: true,
+          callback: (res, convo) => {
+            convo.repeat()
+            convo.next()
+          }
         }
-      },
-      {
-        pattern: bot.utterances.no,
-        callback: (res, convo) => {
-          convo.gotoThread('complete')
-        }
-      },
-      {
-        default: true,
-        callback: (res, convo) => {
-          convo.repeat()
-          convo.next()
-        }
-      }
-    ], {}, '1')
+      ], {}, `${i}`)
+    }
 
-    convo.addMessage('Thread 2', '2')
-    convo.addQuestion('Do you wanna go to thread 3?', [
-      {
-        pattern: bot.utterances.yes,
-        callback: (res, convo) => {
-          convo.gotoThread('3')
-        }
-      },
-      {
-        default: true,
-        callback: (res, convo) => {
-          convo.repeat()
-          convo.next()
-        }
-      }
-    ], {}, '2')
-
-    convo.addMessage('Thread 3', '3')
+    convo.addMessage(`Thread ${loop}`, `${loop}`)
     convo.addQuestion('Which thread do you like?', [
-      {
-        pattern: '1',
-        callback: (res, convo) => {
-          convo.gotoThread('1')
+      ...((l) => {
+        const arr = []
+        for (let i = 1; i < l; i++) {
+          arr.push({
+            pattern: `${i}`,
+            callback: (res, convo) => {
+              convo.gotoThread(`${i}`)
+            }
+          })
         }
-      },
-      {
-        pattern: '2',
-        callback: (res, convo) => {
-          convo.gotoThread('2')
-        }
-      },
+        return arr
+      })(loop),
       {
         default: true,
         callback: (res, convo) => {
           convo.gotoThread('complete')
         }
       }
-    ], {}, '3')
+    ], {}, `${loop}`)
 
     convo.addMessage('Conversation end', 'complete')
     convo.activate()
