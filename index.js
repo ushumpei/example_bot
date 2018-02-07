@@ -3,17 +3,18 @@ import Botkit from 'botkit'
 const controller = Botkit.consolebot({ debug: false })
 controller.setTickDelay(100)
 
-controller.hears(/^\d+$/, ['message_received'], (bot, message) => {
-  if (message.text <= 0) return bot.reply(message, 'Please enter a non zero positive number')
-  bot.reply(message, 'Hello world!')
+const names = ['name', 'email', 'age', 'sex', 'phone number', 'confirm']
+
+controller.hears(['start', 'ok', 'go'], ['message_received'], (bot, message) => {
   bot.createConversation(message, (err, convo) => {
     if (err) throw err
-    convo.say('Conversation start')
-    convo.ask('Do you wanna go to thread 1?', [
+    convo.say('Hello')
+
+    convo.ask('Please answer some questions (ok/not)', [
       {
         pattern: bot.utterances.yes,
         callback: (res, convo) => {
-          convo.gotoThread('1')
+          convo.gotoThread(`${names[0]}`)
         }
       },
       {
@@ -31,21 +32,19 @@ controller.hears(/^\d+$/, ['message_received'], (bot, message) => {
       }
     ])
 
-    const loop = message.text
     let jump
-    for (let i = 1; i < loop; i++) {
-      convo.addMessage(`Thread ${i}`, `${i}`)
-      convo.addQuestion(`Do you wanna go to thread ${i + 1}?`, [
+    for (let i = 0; i < names.length - 1; i++) {
+      convo.addQuestion(`What is your ${names[i]}`, [
         {
-          pattern: bot.utterances.yes,
+          pattern: /^(quit|cancel)$/,
           callback: (res, convo) => {
-            convo.gotoThread(jump || `${i + 1}`)
+            convo.gotoThread('complete')
           }
         },
         {
-          pattern: bot.utterances.no,
+          pattern: /^(.+)$/,
           callback: (res, convo) => {
-            convo.gotoThread('complete')
+            convo.gotoThread(jump || `${names[i + 1]}`)
           }
         },
         {
@@ -55,39 +54,54 @@ controller.hears(/^\d+$/, ['message_received'], (bot, message) => {
             convo.next()
           }
         }
-      ], {}, `${i}`)
+      ], { key: `${names[i]}` }, `${names[i]}`)
     }
 
-    convo.addMessage(`Thread ${loop}`, `${loop}`)
-    convo.addQuestion('Which thread do you like?', [
-      ...((l) => {
+    convo.beforeThread('confirm', (convo, next) => {
+      names.forEach(n => {
+        convo.setVar(n, convo.extractResponse(n))
+      })
+      next()
+    })
+
+    convo.addMessage('Thank you', 'confirm')
+    convo.addMessage(names.slice(0, names.length - 1).map(n => `${n}: {{vars.${n}}}`).join('\n'), 'confirm')
+    convo.addQuestion(`Do you want to change inputs? (no/${names.slice(0, names.length - 1).join('/')})`, [
+      ...(() => {
         const arr = []
-        for (let i = 1; i < l; i++) {
+        for (let i = 0; i < names.length - 1; i++) {
           arr.push({
-            pattern: `${i}`,
+            pattern: `${names[i]}`,
             callback: (res, convo) => {
-              jump = `${loop}`
-              convo.gotoThread(`${i}`)
+              jump = 'confirm'
+              convo.gotoThread(`${names[i]}`)
             }
           })
         }
         return arr
-      })(loop),
+      })(),
       {
-        default: true,
+        pattern: bot.utterances.no,
         callback: (res, convo) => {
           convo.gotoThread('complete')
         }
+      },
+      {
+        default: true,
+        callback: (res, convo) => {
+          convo.repeat()
+          convo.next()
+        }
       }
-    ], {}, `${loop}`)
+    ], {}, 'confirm')
 
-    convo.addMessage('Conversation end', 'complete')
+    convo.addMessage('Bye', 'complete')
     convo.activate()
   })
 })
 
-controller.hears(/[^\d]*/, ['message_received'], (bot, message) => {
-  bot.reply(message, 'Please enter a non zero positive number')
+controller.hears(/^(?!.*(start|ok|go)).+$/, ['message_received'], (bot, message) => {
+  bot.reply(message, 'Please enter "start"')
 })
 
 controller.spawn()
