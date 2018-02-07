@@ -3,7 +3,7 @@ import Botkit from 'botkit'
 const controller = Botkit.consolebot({ debug: false })
 controller.setTickDelay(100)
 
-const names = ['name', 'email', 'age', 'sex', 'phone number', 'confirm']
+const names = ['name', 'email', 'age', 'sex', 'phone number']
 
 controller.hears(['start', 'ok', 'go'], ['message_received'], (bot, message) => {
   bot.createConversation(message, (err, convo) => {
@@ -33,7 +33,7 @@ controller.hears(['start', 'ok', 'go'], ['message_received'], (bot, message) => 
     ])
 
     let jump
-    for (let i = 0; i < names.length - 1; i++) {
+    for (let i = 0; i < names.length; i++) {
       convo.addQuestion(`What is your ${names[i]}`, [
         {
           pattern: /^(quit|cancel)$/,
@@ -44,7 +44,8 @@ controller.hears(['start', 'ok', 'go'], ['message_received'], (bot, message) => 
         {
           pattern: /^(.+)$/,
           callback: (res, convo) => {
-            convo.gotoThread(jump || `${names[i + 1]}`)
+            const to = jump || (i === names.length - 1) ? 'confirm' : names[i + 1]
+            convo.gotoThread(to)
           }
         },
         {
@@ -65,11 +66,12 @@ controller.hears(['start', 'ok', 'go'], ['message_received'], (bot, message) => 
     })
 
     convo.addMessage('Thank you', 'confirm')
-    convo.addMessage(names.slice(0, names.length - 1).map(n => `${n}: {{vars.${n}}}`).join('\n'), 'confirm')
-    convo.addQuestion(`Do you want to change inputs? (no/${names.slice(0, names.length - 1).join('/')})`, [
+    convo.addMessage('Check your inputs')
+    convo.addMessage(names.map(n => `${n}: {{vars.${n}}}`).join('\n'), 'confirm')
+    convo.addQuestion(`Do you want to change inputs? (no/${names.join('/')})`, [
       ...(() => {
         const arr = []
-        for (let i = 0; i < names.length - 1; i++) {
+        for (let i = 0; i < names.length; i++) {
           arr.push({
             pattern: `${names[i]}`,
             callback: (res, convo) => {
