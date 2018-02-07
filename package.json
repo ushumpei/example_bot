@@ -1,0 +1,8 @@
+{
+  "name": "example_bot",
+  "version": "0.0.1",
+  "description": "This is a code example to understand how to use Botkit.",
+  "main": "index.js",
+  "author": "ushumpei",
+  "license": "MIT"
+}
